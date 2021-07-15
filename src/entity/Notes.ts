@@ -6,9 +6,9 @@ export class Notes extends BaseEntity{
 
   @Column() title: string;
 
-  @Column() subtitle: string;
+  @Column() subTitle: string;
 
-  @Column() note_image: string;
+  @Column() noteImage: string;
 
   @Column() tags: string;
 
@@ -17,5 +17,4 @@ export class Notes extends BaseEntity{
   @Column() owner: string;
 
   @Column({ default: new Date(Date.now() - 8640000 * 14) }) createdAt: Date;
-
 }

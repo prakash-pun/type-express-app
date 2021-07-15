@@ -1,6 +1,5 @@
 import 'reflect-metadata';
 import { Router, Request, Response } from "express";
-import {getManager, getRepository} from "typeorm";
 import { validate } from 'class-validator'
 import { Todo } from 'entity/Todo';
 

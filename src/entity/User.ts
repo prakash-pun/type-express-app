@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 export class User {
   @PrimaryColumn('uuid') id: string;
 
+  @Column() username: string;
+
   @Column("varchar", { length: 255 })
   email: string;
 
