@@ -3,7 +3,7 @@ import { Router, Request, Response } from "express";
 const router = Router();
 
 /**
- * @route GET /dashboard
+ * @route GET /auth
  * @desc Dashboard 
  * @access Public
  */

@@ -11,6 +11,7 @@
 
 ```
 tsc --init
+npm test -- -w
 ```
 write test first 
 wirte code to pass the test
