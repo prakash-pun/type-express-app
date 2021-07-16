@@ -1,19 +1,30 @@
-import { Entity, PrimaryColumn, Column, BeforeInsert, BaseEntity } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
+import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, Index } from 'typeorm';
 
 @Entity()
-export class User {
-  @PrimaryColumn('uuid') id: string;
+export class User extends BaseEntity {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Column() username: string;
+  @Column('varchar', { length: 50, nullable: true })
+  firstName: string;
 
-  @Column("varchar", { length: 255 })
+  @Column('varchar', { length: 50, nullable: true })
+  lastName: string;
+
+  @Index({ unique: true })
+  @Column('varchar', { length: 200, nullable: false })
+  userName: string;
+  
+  @Index({ unique: true })
+  @Column("varchar", { length: 255, nullable: false })
   email: string;
 
-  @Column("text") password: string;
+  @Column("varchar", {length: 1000, nullable: false})
+  password: string;
 
-  @BeforeInsert()
-  addId() {
-    this.id = uuidv4();
-  }
+  @Column({ type: "timestamptz", default: "now()" })
+  createdAt: Date;
+
+  @Column({ type: "timestamptz", default: "now()" })
+  updatedAt: Date;
 }
