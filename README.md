@@ -5,12 +5,13 @@
    PORT=3000
    ```
 
-
 ```
 > npm install --save express dotenv
 > npm install -D mocha chai typescript nodemon supertest ts-node tsconfig-paths
 > npm install -D @types/express @types/mocha @types/chai @types/node @types/supertest
 > npm install typeorm --save
+> npm install bcryptjs jsonwebtoken
+> npm install --save-dev @types/bcryptjs @types/jsonwebtoken
 ```
 
 ```
@@ -21,12 +22,12 @@ npm test -- -w
 - change `package.json` file from 
 ```
 "dev": "set NODE_ENV=dev & nodemon -r tsconfig-paths/register src/app.ts",
-"test": "set NODE_ENV=test & mocha --check-leaks -r tsconfig-paths/register -r ts-node/register \"src/test/**/*.spec.ts\""
+"test": "set NODE_ENV=test & mocha --check-leaks -r tsconfig-paths/register -r ts-node/register \"test/**/*.spec.ts\""
 ```
 ## TO below setting for mac
 ```
 "dev": "NODE_ENV=dev nodemon -r tsconfig-paths/register src/app.ts",
-"test": "NODE_ENV=test mocha --check-leaks -r tsconfig-paths/register -r ts-node/register \"src/test/**/*.spec.ts\""
+"test": "NODE_ENV=test mocha --check-leaks -r tsconfig-paths/register -r ts-node/register \"test/**/*.spec.ts\""
 ```
 
 TDD Approach
