@@ -13,7 +13,7 @@ const router = Router();
 
 router.get("/", async (req: Request, res: Response) => {
   const todos = await Todo.find();
-  console.log(todos);
+  // console.log(todos);
   res.json(todos);
 })
 

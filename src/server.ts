@@ -1,6 +1,7 @@
 import express, { Application, Request, Response, NextFunction } from "express";
 import cors from 'cors';
 import routes from 'routes/index';
+import { TryDBConnect } from "config";
 
 export default function createServer() {
   const app: Application = express();
@@ -10,6 +11,15 @@ export default function createServer() {
   }));
 
   app.use(express.json())
+
+  
+  app.use(async (req: Request, res: Response, next: NextFunction) => {
+    await TryDBConnect(() => {
+      res.json({
+        error: "Database connection error"
+      });
+    }, next);
+  });
 
   app.get("/", (req: Request, res: Response, next: NextFunction) => {
     res.send("Hello World");
