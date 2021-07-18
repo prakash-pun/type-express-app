@@ -6,7 +6,7 @@ import createServer from "server";
 const app = createServer();
 
 describe("auth route", () => {
-  it("should auth respont with 2000", (done) => {
+  it("should auth respond with 200", (done) => {
     request(app).get("/auth").expect(200, done);
   });
 });

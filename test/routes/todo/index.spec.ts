@@ -21,12 +21,12 @@ describe("todo route", () => {
       })
       .expect(201)
       .then((response) => {
-        expect(response.body).to.equal({ text: "yo yo" })
+        expect(response.body).to.equal({ text: "yo" })
       });
   })
 
   it('should update the todo list', (done) => {
-    request(app).put('/todo/dfdfdf').expect(404, done);
+    request(app).put('/todo/dfdfdf').expect(401, done);
   });
 
   it('should delete the todo list', () => {

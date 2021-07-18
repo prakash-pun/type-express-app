@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, Index } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, Index, OneToMany } from 'typeorm';
+import { Notes } from './Notes';
 
 @Entity()
 export class User extends BaseEntity {
@@ -27,4 +28,7 @@ export class User extends BaseEntity {
 
   @Column({ type: "timestamptz", default: "now()" })
   updatedAt: Date;
+
+  @OneToMany(() => Notes, owner => owner.owner)
+  notes: Notes[]
 }

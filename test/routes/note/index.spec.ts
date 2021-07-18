@@ -5,18 +5,18 @@ import { response } from "express";
 
 const app = createServer();
 
-describe('base url for note', () => {
+describe('note route', () => {
   it('should respond with 200 status', () => {
     request(app).get('/note').expect(200);
   });
   
-  it('/note should post create note with status 201', () => {
+  it('/note should post create note with status 201', (done) => {
     request(app).post('/note').send({
       title: "my note",
       subTitle: "subtitle of note",
       content: "this the content of the note that I create"
     })
-      .expect(201)
+      .expect(201, done)
       .then((response) => {
         expect(response.body).equal({
           title: "my note",
