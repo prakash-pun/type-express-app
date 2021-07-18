@@ -4,9 +4,11 @@ import { User } from 'entity/User';
 
 export const authFunction = {
   generateJwt: (payload) => {
-    const jwtToken = jwt.sign(payload, process.env.JWT_SECRET_KEY);
+    let refreshTokens = []
+    const jwtToken = jwt.sign(payload, process.env.JWT_SECRET_KEY, { expiresIn: Math.floor(Date.now() / 1000) + (60 * 60), });
     console.log(jwtToken)
-
+    // const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET)
+    // refreshTokens.push(refreshToken)
     return jwtToken;
   },
 
@@ -19,14 +21,22 @@ export const authFunction = {
       if (!token) {
         return res.status(401).json({ "detail": "token not provided" });
       }
-      const userToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      console.log(userToken);
-      // const user = await User.findByIds(userToken.userId);
-      next();
+      const userToken = jwt.verify(token, process.env.JWT_SECRET_KEY, async (err, decode) => {
+        console.log(err);
+        if (err) return res.status(403).json({"detail": "invalid token"})
+        const user = await User.find(decode.userId);
+        next();
+        // if (user){
+        // next();
+        // }else{
+        //   return res.status(401).json({ "detail": "invalid credentials" });
+        // }
+      });
     } catch {
-      return res.status(400).json({ message: "error login" });
+      return res.status(401).json({ message: "error login" });
     }
   }
 };
 
 export default authFunction;
+// const refreshTokens = refreshToken.filter(token => token !== req.body.token);

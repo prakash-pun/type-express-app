@@ -11,7 +11,6 @@ export default function createServer() {
   }));
 
   app.use(express.json())
-
   
   app.use(async (req: Request, res: Response, next: NextFunction) => {
     await TryDBConnect(() => {

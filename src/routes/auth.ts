@@ -77,10 +77,14 @@ router.post("/login",
     try {
       const { email, password } = req.body;
       const user = await User.findOne({ email: email });
-      
+      const jwtUser = {
+        userId: user.id,
+        userName: user.userName,
+        userEmail: user.email
+      }
       if (bcrypt.compareSync(password, user.password)) {
         console.log(user.email);
-        const jwt = jwtAuth.generateJwt({ userId: user.id, userName: user.userName });
+        const jwt = jwtAuth.generateJwt(jwtUser);
         res.append("X-JWT", jwt);
         return res.status(200).json({jwt})
       } else {
@@ -91,10 +95,13 @@ router.post("/login",
       return res.status(400).json({ message: "error login" });
     }
 });
-
 router.post("/signout", jwtAuth.verifyLogin, (req: Request, res: Response) => {
-  // req.session = null;
-  res.status(200).send({});
+  try{
+    res.clearCookie("refresh_token");
+    res.status(204).send({"detail": "logged out"});
+  }catch (error){
+    res.status(500).send(error)
+  }
 })
 
 export default router;

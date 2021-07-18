@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Router, Request, Response } from "express";
 import { validate } from 'class-validator'
 import { Todo } from 'entity/Todo';
+import jwtAuth from 'middleware/jwtAuth';
 
 const router = Router();
 
@@ -11,13 +12,12 @@ const router = Router();
  * @access Public
  */
 
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const todos = await Todo.find();
-  // console.log(todos);
   res.json(todos);
 })
 
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const { text } = req.body;
   console.log(text);
   if (text) {
@@ -29,14 +29,14 @@ router.post("/", async (req: Request, res: Response) => {
   }
 })
 
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const id = req.params.id;
   console.log(id);
   const todoInfo = await Todo.findOne({ id: id });
   return res.status(200).send(todoInfo);
 })
 
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const id = req.params.id;
   console.log(id);
   const todoInfo = await Todo.findOne({ id: id });
@@ -46,7 +46,7 @@ router.put('/:id', async (req: Request, res: Response) => {
   return res.status(200).send(result);
 })
 
-router.post('/:id/complete', async (req: Request, res: Response) => {
+router.post('/:id/complete', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const id = req.params.id;
   const todoInfo = await Todo.findOne({ id: id });
   todoInfo.isCompleted = true;
@@ -54,7 +54,7 @@ router.post('/:id/complete', async (req: Request, res: Response) => {
   return res.status(200).send(result);
 })
 
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const id = req.params.id;
   const todoInfo = await Todo.findOne({ id: id })
   Todo.delete(todoInfo);
