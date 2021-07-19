@@ -6,19 +6,19 @@ export class Notes extends BaseEntity{
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 50, nullable: false }) 
+  @Column({ length: 50 }) 
   title: string;
 
-  @Column({ length: 100, nullable: false }) 
+  @Column({ length: 100, nullable: true}) 
   subTitle: string;
 
-  @Column({nullable: true}) 
+  @Column({type: "varchar", default: "notes/defalut.png", nullable: true}) 
   noteImage: string;
 
-  @Column({nullable: true}) 
+  @Column({ length: 100, nullable: true}) 
   tags: string;
 
-  @Column({ length: 1000, nullable: false }) 
+  @Column({ length: 1000 }) 
   content: string;
 
   @ManyToOne(() => User, user => user.notes)

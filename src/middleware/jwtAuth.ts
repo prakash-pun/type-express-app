@@ -22,15 +22,13 @@ export const authFunction = {
         return res.status(401).json({ "detail": "token not provided" });
       }
       const userToken = jwt.verify(token, process.env.JWT_SECRET_KEY, async (err, decode) => {
-        console.log(err);
         if (err) return res.status(403).json({"detail": "invalid token"})
-        console.log(decode.userId);
         const user = await User.findOne({id: decode.userId});
         if (user){
           req.user = user;
           next();
         }else{
-          return res.status(401).json({ "detail": "invalid credentials" });
+          return res.status(401).json({ "detail": "invalid token. user not found" });
         }
       });
     } catch {

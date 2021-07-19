@@ -1,5 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, Index, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, Index, OneToMany, BeforeInsert, AfterInsert } from 'typeorm';
+import bcrypt from 'bcryptjs';
 import { Notes } from './Notes';
+import PasswordEncryption from 'util/passwordManager';
 
 @Entity()
 export class User extends BaseEntity {
@@ -20,15 +22,29 @@ export class User extends BaseEntity {
   @Column("varchar", { length: 255, nullable: false })
   email: string;
 
-  @Column("varchar", {length: 1000, nullable: false})
-  password: string;
+  @Column({type: "varchar", select: false, length: 1000})
+  password!: string;
 
-  @Column({ type: "timestamptz", default: "now()" })
-  createdAt: Date;
+  @Column({select:false, type: "timestamptz", default: "now()" })
+  createdAt!: Date;
 
-  @Column({ type: "timestamptz", default: "now()" })
-  updatedAt: Date;
+  @Column({select: false, type: "timestamptz", default: "now()" })
+  updatedAt!: Date;
 
   @OneToMany(() => Notes, owner => owner.owner)
   notes: Notes[]
+
+  @BeforeInsert()
+  @AfterInsert()
+  async hashPassword(): Promise<void> {
+    if (this.password) {
+      console.log(this.password);
+        this.password = await PasswordEncryption(this.password);
+    }
+  }
+
+  checkPasswordEncrypt(onencryptedPassword: string){
+    console.log(this.password);
+    return bcrypt.compareSync(onencryptedPassword, this.password);
+  }
 }
