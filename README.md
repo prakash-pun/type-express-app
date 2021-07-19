@@ -12,6 +12,8 @@
 > npm install typeorm --save
 > npm install bcryptjs jsonwebtoken
 > npm install --save-dev @types/bcryptjs @types/jsonwebtoken
+> npm install amqplib
+> npm install @types/amqplib
 ```
 
 ```

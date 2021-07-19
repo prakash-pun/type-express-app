@@ -99,7 +99,11 @@ router.post("/login", loginValidation, async (req: Request, res: Response) => {
       const jwtUser = {
         userId: user.id,
         userName: user.userName,
-        userEmail: user.email
+        firstName: user.firstName,
+        lastName: user.lastName,
+        userEmail: user.email,
+        origin: process.env.ORIGIN,
+        services: process.env.SERVICES,
       }
       if (user.checkPasswordEncrypt(data.password)) {
         const jwt = jwtAuth.generateJwt(jwtUser);
