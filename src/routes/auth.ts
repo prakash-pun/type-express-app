@@ -18,8 +18,7 @@ const router = Router();
 router.get("/profile", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const userRepository = getRepository(User);
   const userId = req.user.id;
-  const user = await userRepository.findOne({
-    where: {id: userId}});
+  const user = await userRepository.findOne({where: {id: userId}});
   console.log(user);
   res.status(200).json(user);
 })

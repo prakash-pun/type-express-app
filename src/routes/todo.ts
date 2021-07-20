@@ -3,7 +3,6 @@ import { Router, Request, Response } from "express";
 import { validate } from 'class-validator'
 import { Todo } from 'entity/Todo';
 import jwtAuth from 'middleware/jwtAuth';
-
 const router = Router();
 
 /**

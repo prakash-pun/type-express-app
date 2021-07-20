@@ -4,6 +4,7 @@ import jwtAuth from 'middleware/jwtAuth';
 import { Notes } from "entity/Notes";
 import validateNote from "util/validation/validateNote";
 import { getRepository } from "typeorm";
+import { createClient, sendRPCMessage } from "config";
 
 const router = Router();
 
@@ -13,14 +14,31 @@ const router = Router();
  * @access Authenticated
  */
 
+let channel;
+createClient({ url: 'amqps://ountcxwg:jP1T_laUC8wWJT8JnVGSE5IQWR6n1LNp@rat.rmq2.cloudamqp.com/ountcxwg' })
+  .then(ch => {
+    channel = ch;
+  });
+
 router.get("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const noteRepository = getRepository(Notes);
   const user = req.user.id;
+  const page: number = parseInt(req.query.page as any) || 1;
+  const limit: number = parseInt(req.query.limit as any) || 5;
+  const total = await noteRepository.count({ where: { owner: user } });
+  let options = {}
+
   const note = await noteRepository.find({
-    where: {owner: user}});
-  console.log(note);
-  res.status(200).json(note);
+    ...options,
+    take:limit,
+    skip: (page - 1) * limit,
+    where: { owner: user }
+  });
+
+  res.status(200).json({total, page, last_page: Math.ceil(total/limit), note});
 })
+
+
 
 router.post("/", validateNote, jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const noteData:{
@@ -47,12 +65,16 @@ router.post("/", validateNote, jwtAuth.verifyLogin, async (req: Request, res: Re
       notes = await noteRepository.create(noteData);
       notes.owner = req.user;
       const result = await noteRepository.save(notes);
+      sendRPCMessage(channel, "Hello", 'note_created');
+      // channel.sendToQueue('note_created', Buffer.from("hello"));
+      console.log(123)
       return res.status(201).json(result);
     }catch(err){
       return res.status(201).json({status: errors, message: "error creating note"});
     }
   }
 })
+
 
 router.get('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const noteRepository = getRepository(Notes);

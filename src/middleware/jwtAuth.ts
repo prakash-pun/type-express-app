@@ -19,7 +19,7 @@ export const authFunction = {
       }
       const token = await req.header("Authorization").split(" ")[1];
       if (!token) {
-        return res.status(401).json({ "detail": "token not provided" });
+        return res.status(401).json({ detail: "token not provided" });
       }
       const userToken = jwt.verify(token, process.env.JWT_SECRET_KEY, async (err, decode) => {
         if (err) return res.status(403).json({"detail": "invalid token"})
