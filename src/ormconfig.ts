@@ -1,8 +1,5 @@
 // ormconfig with postgresql
 import { ConnectionOptions } from "typeorm";
-import path from "path";
-
-const isCompiled = path.extname(__filename) === ".ts";
 
 export default {
   type: "postgres",

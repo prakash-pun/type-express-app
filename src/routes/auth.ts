@@ -23,6 +23,7 @@ router.get("/profile", jwtAuth.verifyLogin, async (req: Request, res: Response) 
   res.status(200).json(user);
 })
 
+
 router.post("/register",
   [
     body('email').isEmail().withMessage('Email must be valid'),
@@ -70,6 +71,7 @@ router.post("/register",
       return res.status(400).json({errors: errors.array()})
     }
 });
+
 
 router.post("/login", loginValidation, async (req: Request, res: Response) => {
   try {
@@ -120,6 +122,7 @@ router.post("/login", loginValidation, async (req: Request, res: Response) => {
   }
 });
 
+
 router.post("/change", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   // Get ID from JWT
   const id = req.user.id;
@@ -142,7 +145,6 @@ router.post("/change", jwtAuth.verifyLogin, async (req: Request, res: Response) 
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
   }else{
-    // user = await userRepository.findOneOrFail(id);
     user = await userRepository
     .createQueryBuilder( "user" )
     .addSelect( 'user.password' )
@@ -176,6 +178,7 @@ router.post("/change", jwtAuth.verifyLogin, async (req: Request, res: Response) 
     }
 }) 
 
+
 router.patch("/profile/change", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   let user: User;
   const userId = req.user.id;
@@ -196,13 +199,14 @@ router.patch("/profile/change", jwtAuth.verifyLogin, async (req: Request, res: R
   }else{
     user = await userRepository.findOneOrFail(userId);
     if(!user){
-      return res.status(401).json({status: "unauthorized", message: "user not found"});
+      return res.status(401).json({status: "error", message: "user not found"});
     }
     userRepository.merge(user, userData);
     const result = await userRepository.save(user);
     return res.status(200).json(result);
   }
 })
+
 
 router.post("/signout", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   try{

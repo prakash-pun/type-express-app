@@ -3,6 +3,7 @@ import cors from 'cors';
 import routes from 'routes/index';
 import { TryDBConnect } from "config";
 
+
 export default function createServer() {
   const app: Application = express();
 

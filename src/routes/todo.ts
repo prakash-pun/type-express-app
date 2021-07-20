@@ -16,6 +16,7 @@ router.get("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   res.json(todos);
 })
 
+
 router.post("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const { text } = req.body;
   console.log(text);
@@ -28,12 +29,14 @@ router.post("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   }
 })
 
+
 router.get('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const id = req.params.id;
   console.log(id);
   const todoInfo = await Todo.findOne({ id: id });
   return res.status(200).send(todoInfo);
 })
+
 
 router.put('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const id = req.params.id;
@@ -45,6 +48,7 @@ router.put('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   return res.status(200).send(result);
 })
 
+
 router.post('/:id/complete', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const id = req.params.id;
   const todoInfo = await Todo.findOne({ id: id });
@@ -52,6 +56,7 @@ router.post('/:id/complete', jwtAuth.verifyLogin, async (req: Request, res: Resp
   const result = await Todo.save(todoInfo);
   return res.status(200).send(result);
 })
+
 
 router.delete('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const id = req.params.id;

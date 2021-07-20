@@ -4,7 +4,7 @@ import jwtAuth from 'middleware/jwtAuth';
 import { Notes } from "entity/Notes";
 import validateNote from "util/validation/validateNote";
 import { getRepository } from "typeorm";
-import { createClient, sendRPCMessage } from "config";
+import { amqpConnect, amqpSend } from "config";
 
 const router = Router();
 
@@ -14,11 +14,12 @@ const router = Router();
  * @access Authenticated
  */
 
+
 let channel;
-createClient({ url: 'amqps://ountcxwg:jP1T_laUC8wWJT8JnVGSE5IQWR6n1LNp@rat.rmq2.cloudamqp.com/ountcxwg' })
-  .then(ch => {
-    channel = ch;
-  });
+amqpConnect({ url: process.env.CLOUDAMQP_URL })
+.then(ch => {
+  channel = ch;
+});
 
 router.get("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const noteRepository = getRepository(Notes);
@@ -37,8 +38,6 @@ router.get("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
 
   res.status(200).json({total, page, last_page: Math.ceil(total/limit), note});
 })
-
-
 
 router.post("/", validateNote, jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const noteData:{
@@ -65,9 +64,7 @@ router.post("/", validateNote, jwtAuth.verifyLogin, async (req: Request, res: Re
       notes = await noteRepository.create(noteData);
       notes.owner = req.user;
       const result = await noteRepository.save(notes);
-      sendRPCMessage(channel, "Hello", 'note_created');
-      // channel.sendToQueue('note_created', Buffer.from("hello"));
-      console.log(123)
+      amqpSend(channel, JSON.stringify(result), 'note_created');
       return res.status(201).json(result);
     }catch(err){
       return res.status(201).json({status: errors, message: "error creating note"});
@@ -95,6 +92,7 @@ router.get('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
     res.status(200).json(note);
   }
 })
+
 
 router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const noteData:{
@@ -139,6 +137,7 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
     return res.status(400).json({status: "error", message: "error updating note"});
   }
 });
+
 
 router.delete("/:id", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const noteRepository = getRepository(Notes);
