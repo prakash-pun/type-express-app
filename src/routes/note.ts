@@ -1,10 +1,43 @@
 import { Router, Request, Response } from "express";
 import { validationResult, Result, ValidationError } from "express-validator";
+import multer from "multer";
 import jwtAuth from 'middleware/jwtAuth';
 import { Notes } from "entity/Notes";
 import validateNote from "util/validation/validateNote";
 import { getRepository } from "typeorm";
 import { amqpConnect, amqpSend } from "config";
+import  { v4 as uuidv4 } from 'uuid';
+
+
+const storage = multer.diskStorage({
+  destination: function (req: Request, file: Express.Multer.File,
+    callback: (error: Error | null, destination: string) => void) {
+    const dir = './notes';
+    callback(null, dir);
+  },
+  filename: function (req: Request, file: Express.Multer.File,
+    callback: (error: Error | null, filename: string) => void) {
+    const uuid = uuidv4();
+    callback(null, 'notes-'+ new Date().getTime() + file.originalname);
+  }
+});
+
+const fileFilter = (req: Request, file: Express.Multer.File,
+  callback: (error: Error | null, destination: boolean) => void) => {
+  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+    callback(null, true);
+  } else {
+    callback(null, false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 1024 * 1024 * 5
+  },
+  fileFilter: fileFilter
+});
 
 const router = Router();
 
@@ -20,6 +53,7 @@ amqpConnect({ url: process.env.CLOUDAMQP_URL })
 .then(ch => {
   channel = ch;
 });
+
 
 router.get("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   const noteRepository = getRepository(Notes);
@@ -39,19 +73,22 @@ router.get("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   res.status(200).json({total, page, last_page: Math.ceil(total/limit), note});
 })
 
-router.post("/", validateNote, jwtAuth.verifyLogin, async (req: Request, res: Response) => {
+
+router.post("/", jwtAuth.verifyLogin, upload.single('noteImage'), async (req: Request, res: Response) => {
   const noteData:{
     title: string,
     subTitle: string,
     noteImage: string,
     tags: string,
-    content:string,
+    content: string,
+    noteShare: boolean;
   } = {
     title: req.body.title,
     subTitle: req.body.subTitle,
-    noteImage: req.body.noteImage,
+    noteImage: req.file.path,
     tags: req.body.tags,
     content: req.body.content,
+    noteShare: req.body.noteShare,
   }
   const errors: Result<ValidationError> = validationResult( req );
   
@@ -64,7 +101,9 @@ router.post("/", validateNote, jwtAuth.verifyLogin, async (req: Request, res: Re
       notes = await noteRepository.create(noteData);
       notes.owner = req.user;
       const result = await noteRepository.save(notes);
-      amqpSend(channel, JSON.stringify(result), 'note_created');
+      const filePath = req.file;
+      const postData = {result, filePath};
+      if (result.noteShare == true) amqpSend(channel, JSON.stringify(postData), 'note_created');
       return res.status(201).json(result);
     }catch(err){
       return res.status(201).json({status: errors, message: "error creating note"});

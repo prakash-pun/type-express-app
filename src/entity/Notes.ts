@@ -21,6 +21,9 @@ export class Notes extends BaseEntity{
   @Column({ length: 1000 }) 
   content: string;
 
+  @Column({type: 'boolean', default: 'false', nullable: true})
+  noteShare: boolean;
+
   @ManyToOne(() => User, user => user.notes)
   owner: User;
 

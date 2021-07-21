@@ -15,6 +15,8 @@
 > npm install amqplib
 > npm install @types/amqplib
 > npm install pg --save
+> npm install body-parser
+> npm install --save multer
 ```
 
 ```

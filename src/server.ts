@@ -1,5 +1,6 @@
 import express, { Application, Request, Response, NextFunction } from "express";
 import cors from 'cors';
+import bodyParser from "body-parser";
 import routes from 'routes/index';
 import { TryDBConnect } from "config";
 
@@ -11,7 +12,12 @@ export default function createServer() {
     origin: ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:4200']
   }));
 
-  app.use(express.json())
+  app.use('/notes', express.static('notes'));
+
+  app.use(bodyParser.json())
+  app.use(bodyParser.urlencoded({ extended: false }));
+
+  // app.use(express.json())
   
   app.use(async (req: Request, res: Response, next: NextFunction) => {
     await TryDBConnect(() => {
