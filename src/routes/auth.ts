@@ -1,11 +1,11 @@
 import { Router, Request, Response } from "express";
 const { body, validationResult } = require('express-validator');
-import { User } from "entity/User";
-import jwtAuth from 'middleware/jwtAuth';
-import { getRepository } from "typeorm";
-import { validate, ValidationError } from "class-validator";
-import loginValidation from "util/validation/loginValidation";
+import { getMongoRepository, getRepository } from "typeorm";
 import { Result } from "express-validator";
+import { User } from "entity/User";
+import { validate, ValidationError } from "class-validator";
+import jwtAuth from 'middleware/jwtAuth';
+import loginValidation from "util/validation/loginValidation";
 
 
 const router = Router();
@@ -16,10 +16,9 @@ const router = Router();
  * @access Public
  */
 router.get("/profile", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  const userRepository = getRepository(User);
+  const userRepository = getMongoRepository(User);
   const userId = req.user.id;
-  const user = await userRepository.findOne({where: {id: userId}});
-  console.log(user);
+  const user = await userRepository.findOne(userId);
   res.status(200).json(user);
 })
 
@@ -50,19 +49,20 @@ router.post("/register",
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
       }
-      const duplicateUser = await User.findOne({ email: req.body.email });
-      const duplicateUserName = await User.findOne({ userName: req.body.userName });
+
+      let user: User;
+      const userRepository = getMongoRepository(User);
+
+      const duplicateUser = await userRepository.findOne({ email: req.body.email });
+      const duplicateUserName = await userRepository.findOne({ userName: req.body.userName });
       if (duplicateUserName) {
         return res.status(400).json({ message: "username already exists" });
       }
       if (duplicateUser) {
         return res.status(400).json({ message: "email already exists" });
       }
-
-      const user = await User.create(userData);
-      const result = await User.save(user);
-      console.log(result);
-      console.log(userData);
+      user = await userRepository.create(userData);
+      const result = await userRepository.save(user);
 
       return res.status(201).json(result);
     } catch (e) {
@@ -87,14 +87,17 @@ router.post("/login", loginValidation, async (req: Request, res: Response) => {
     if (!errors.isEmpty()) {
       return res.status(422).json({ errors: errors.array() });
     }
-    const userRepository = getRepository(User);
+    const userRepository = getMongoRepository(User);
     let user: User;
 
-    user = await userRepository
-      .createQueryBuilder( "user" )
-      .addSelect( 'user.password' )
-      .where( "user.email = :email", { email: data.email } )
-      .getOne();
+    // user = await userRepository
+    //   .createQueryBuilder( "user" )
+    //   .addSelect( 'user.password' )
+    //   .where( "user.email = :email", { email: data.email } )
+    //   .getOne();
+
+    user = await userRepository.findOne({ email: data.email })
+    console.log(user);
 
     if (user){
       const jwtUser = {
@@ -182,7 +185,7 @@ router.post("/change", jwtAuth.verifyLogin, async (req: Request, res: Response) 
 router.patch("/profile/change", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
   let user: User;
   const userId = req.user.id;
-  const userRepository = await getRepository(User);
+  const userRepository = await getMongoRepository(User);
   const userData: {
     firstName: string;
     lastName: string;

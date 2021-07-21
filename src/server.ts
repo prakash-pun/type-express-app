@@ -4,7 +4,6 @@ import bodyParser from "body-parser";
 import routes from 'routes/index';
 import { TryDBConnect } from "config";
 
-
 export default function createServer() {
   const app: Application = express();
 

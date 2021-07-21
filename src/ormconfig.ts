@@ -2,17 +2,15 @@
 import { ConnectionOptions } from "typeorm";
 
 export default {
-  type: "postgres",
+  type: "mongodb",
   host: process.env.DB_HOST || "localhost",
-  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
   database: process.env.DB_DATABASE || "type-express",
-  username: process.env.DB_USERNAME || "postgres",
-  password: process.env.DB_PASSWORD || "prakashpun",
   synchronize: true,
   logging: false,
-  autoReconnect: true,
-  reconnectTries: Number.MAX_VALUE,
-  reconnectInterval: 2000,
+  // autoReconnect: true,
+  // reconnectTries: Number.MAX_VALUE,
+  // reconnectInterval: 2000,
+  useUnifiedTopology: true,
   entities: [
     "src/entity/**/*.ts"
   ],

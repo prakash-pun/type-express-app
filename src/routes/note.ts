@@ -4,10 +4,10 @@ import multer from "multer";
 import jwtAuth from 'middleware/jwtAuth';
 import { Notes } from "entity/Notes";
 import validateNote from "util/validation/validateNote";
-import { getRepository } from "typeorm";
+import { getMongoRepository, getRepository } from "typeorm";
 import { amqpConnect, amqpSend } from "config";
 import  { v4 as uuidv4 } from 'uuid';
-
+import mongoose, { mongo, ObjectId } from "mongoose";
 
 const storage = multer.diskStorage({
   destination: function (req: Request, file: Express.Multer.File,
@@ -56,7 +56,7 @@ amqpConnect({ url: process.env.CLOUDAMQP_URL })
 
 
 router.get("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  const noteRepository = getRepository(Notes);
+  const noteRepository = getMongoRepository(Notes);
   const user = req.user.id;
   const page: number = parseInt(req.query.page as any) || 1;
   const limit: number = parseInt(req.query.limit as any) || 5;
@@ -75,28 +75,30 @@ router.get("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
 
 
 router.post("/", jwtAuth.verifyLogin, upload.single('noteImage'), async (req: Request, res: Response) => {
-  const noteData:{
-    title: string,
-    subTitle: string,
-    noteImage: string,
-    tags: string,
-    content: string,
-    noteShare: boolean;
-  } = {
-    title: req.body.title,
-    subTitle: req.body.subTitle,
-    noteImage: req.file.path,
-    tags: req.body.tags,
-    content: req.body.content,
-    noteShare: req.body.noteShare,
-  }
+
   const errors: Result<ValidationError> = validationResult( req );
   
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
   }else{
-    try{    
-      const noteRepository = getRepository(Notes);
+    try {
+      const noteData:{
+        title: string,
+        subTitle: string,
+        noteImage: string,
+        tags: string,
+        content: string,
+        noteShare: boolean;
+      } = {
+        title: req.body.title,
+        subTitle: req.body.subTitle,
+        noteImage: req.file.path,
+        tags: req.body.tags,
+        content: req.body.content,
+        noteShare: req.body.noteShare,
+      }
+
+      const noteRepository = getMongoRepository(Notes);
       let notes: Notes;
       notes = await noteRepository.create(noteData);
       notes.owner = req.user;
@@ -105,7 +107,8 @@ router.post("/", jwtAuth.verifyLogin, upload.single('noteImage'), async (req: Re
       const postData = {result, filePath};
       if (result.noteShare == true) amqpSend(channel, JSON.stringify(postData), 'note_created');
       return res.status(201).json(result);
-    }catch(err){
+    } catch (err) {
+      console.log(err);
       return res.status(201).json({status: errors, message: "error creating note"});
     }
   }
@@ -113,14 +116,11 @@ router.post("/", jwtAuth.verifyLogin, upload.single('noteImage'), async (req: Re
 
 
 router.get('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  const noteRepository = getRepository(Notes);
+  const noteRepository = getMongoRepository(Notes);
   const user = req.user.id;
   let note: Notes;
-  note = await noteRepository.findOne({
-    where: {
-      owner: user,
-      id: req.params.id,
-    }});
+  const id: mongoose.Types._ObjectId = new mongoose.Types.ObjectId(req.params.id);
+  note = await noteRepository.findOne(id: id, owner: req.user});
   console.log(note);
   if(!note){
     res.status(404).json({
@@ -152,7 +152,7 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
   }
-  const noteRepository = getRepository(Notes);
+  const noteRepository = getMongoRepository(Notes);
   let note: Notes;
   try{
     note = await noteRepository.findOne({
@@ -179,7 +179,7 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
 
 
 router.delete("/:id", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  const noteRepository = getRepository(Notes);
+  const noteRepository = getMongoRepository(Notes);
   const user = req.user.id;
   let note: Notes;
   note = await noteRepository.findOne({

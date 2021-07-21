@@ -1,10 +1,11 @@
-import { PrimaryGeneratedColumn, Entity, Column, BaseEntity, OneToMany, ManyToOne, JoinColumn } from "typeorm";
+import mongoose, { ObjectId } from "mongoose";
+import { Entity, Column, BaseEntity, ManyToOne, ObjectIdColumn } from "typeorm";
 import { User } from "./User";
 
 @Entity()
 export class Notes extends BaseEntity{
-  @PrimaryGeneratedColumn()
-  id: number;
+  @ObjectIdColumn()
+  id: ObjectId;
 
   @Column({ length: 50 }) 
   title: string;

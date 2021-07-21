@@ -1,12 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, Index, OneToMany, BeforeInsert, AfterInsert } from 'typeorm';
+import { Entity, Column, BaseEntity, Index, OneToMany, BeforeInsert, AfterInsert, ObjectIdColumn } from 'typeorm';
 import bcrypt from 'bcryptjs';
 import { Notes } from './Notes';
 import PasswordEncryption from 'util/passwordManager';
 
 @Entity()
 export class User extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @ObjectIdColumn()
+  id: string;
 
   @Column('varchar', { length: 50, nullable: true })
   firstName: string;
