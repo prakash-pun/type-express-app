@@ -5,7 +5,8 @@ import mongoose from 'mongoose';
 import { graphqlHTTP } from 'express-graphql';
 import routes from 'routes/index';
 import config from 'config/dbConfig';
-import {schema} from "data/schema";
+import { schema } from "modules/data/schema";
+import { schemaNote } from "modules/notes/schema";
 
 export default function createServer() {
   const app: Application = express();
@@ -34,8 +35,13 @@ export default function createServer() {
     res.send("Hello World 😁");
   });
 
-  app.use('/graphql', graphqlHTTP({
+  app.use('/graphqlUser', graphqlHTTP({
     schema: schema,
+    graphiql: true
+  }))
+
+  app.use('/graphqlNote', graphqlHTTP({
+    schema: schemaNote,
     graphiql: true
   }))
 
@@ -45,3 +51,14 @@ export default function createServer() {
 }
 
 // 60f8f6d1dc38e804306a343d
+// query{
+//   getNote(id: "60f907d6be33381fc0a0915a"){
+//     owner{
+//       firstName
+//     }
+// }
+// query{
+//   getUser (id: "60f8f6d1dc38e804306a343d"){
+//    firstName
+//  }
+//  }

@@ -12,7 +12,7 @@ import mongoose from 'mongoose';
 const storage = multer.diskStorage({
   destination: function (req: Request, file: Express.Multer.File,
     callback: (error: Error | null, destination: string) => void) {
-    const dir = './notes';
+    const dir = './uploads';
     callback(null, dir);
   },
   filename: function (req: Request, file: Express.Multer.File,
@@ -118,7 +118,8 @@ router.post("/", jwtAuth.verifyLogin, upload.single('noteImage'), async (req: Re
       notes.owner = req.user;
       const result = await notes.save();
       const filePath = req.file;
-      const postData = {result, filePath};
+      const postData = { result, filePath };
+      console.log(postData);
       if (result.noteShare == true) amqpSend(channel, JSON.stringify(postData), 'note_created');
       return res.status(201).json(result);
     }catch(err){
@@ -148,7 +149,7 @@ router.get('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
 })
 
 
-router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: Response) => {
+router.patch("/:id", jwtAuth.verifyLogin, upload.single('noteImage'), async (req: Request, res: Response) => {
   const noteData:{
     title: string,
     subTitle: string,
@@ -159,7 +160,7 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
   } = {
     title: req.body.title,
     subTitle: req.body.subTitle,
-    noteImage: req.body.noteImage,
+    noteImage: req.file.path,
     tags: req.body.tags,
     content: req.body.content,
     noteShare: req.body.content,
@@ -184,6 +185,7 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
       });
     } else {
       Notes.findOneAndUpdate({ _id: req.params.id }, noteData, { new: true }, async (err, note) => {
+        console.log(err);
         if (err) return res.status(400).json({ status: "error", message: "error updating note"})
         console.log(note.title);
         const result = await note.save();
@@ -211,6 +213,8 @@ router.delete("/:id", jwtAuth.verifyLogin, async (req: Request, res: Response) =
     });
   }else{
     note.delete();
+    const id = req.params.id;
+    amqpSend(channel, JSON.stringify(id), 'note_deleted');
     res.status(200).json({status: "success", message: "note deleted"});
   }
 });
