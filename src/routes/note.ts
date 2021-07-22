@@ -56,32 +56,38 @@ amqpConnect({ url: process.env.CLOUDAMQP_URL })
 
 
 router.get("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  const user = req.user;
-  console.log(user.id)
-  console.log(user._id)
-  const page: number = parseInt(req.query.page as any) || 1;
-  const limit: number = parseInt(req.query.limit as any) || 5;
-  const total = await Notes.count(user.id);
-  console.log(total)
-  console.log(mongoose.Types.ObjectId.isValid(user.id));
-  // true
-  console.log(mongoose.Types.ObjectId.isValid('whatever'));
-  // false
+  try {
+    
+    const user = req.user;
+    console.log(user.id)
+    console.log(user._id)
+    const page: number = parseInt(req.query.page as any) || 1;
+    const limit: number = parseInt(req.query.limit as any) || 5;
+    const total = await Notes.count(user.id);
+    console.log(total)
+    console.log(mongoose.Types.ObjectId.isValid(user.id));
+    // true
+    console.log(mongoose.Types.ObjectId.isValid('whatever'));
+    // false
 
-  let options = {}
+    let options = {}
 
-  const note = await Notes.find(
-    {
-    // ...options,
-    // take:limit,
-    // skip: (page - 1) * limit,
-    owner: user.id
-  });
+    const note = await Notes.find(
+      {
+        // ...options,
+        // take:limit,
+        // skip: (page - 1) * limit,
+        owner: user.id
+      });
   
-  console.log(note);
-  if (!note) return res.status(400).json({status: "error", message: "not found"})
+    console.log(note);
+    if (!note) return res.status(400).json({ status: "error", message: "not found" })
 
-  return res.status(200).json({total, page, last_page: Math.ceil(total/limit), note});
+    return res.status(200).json({ total, page, last_page: Math.ceil(total / limit), note });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ status: "error", message: "error getting notes" });
+  }
 })
 
 
@@ -148,13 +154,15 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
     subTitle: string,
     noteImage: string,
     tags: string,
-    content:string,
+    content: string,
+    noteShare: boolean,
   } = {
     title: req.body.title,
     subTitle: req.body.subTitle,
     noteImage: req.body.noteImage,
     tags: req.body.tags,
     content: req.body.content,
+    noteShare: req.body.content,
   }
   const errors: Result<ValidationError> = validationResult( req );
   
@@ -164,21 +172,23 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
 
   let note: INotes;
   try{
-    note = await Notes.findOne(
-      {
+    note = await Notes.findOne({
         owner: req.user.id,
         _id: req.params.id,
       });
     console.log(note);
     if(!note){
-      res.status(404).json({
+      return res.status(404).json({
         status: "error",
         message: "Note not found",
       });
-    }else{
-      note.updateOne(note);
-      const result = await note.save();
-      return res.status(200).json(result);
+    } else {
+      Notes.findOneAndUpdate({ _id: req.params.id }, noteData, { new: true }, async (err, note) => {
+        if (err) return res.status(400).json({ status: "error", message: "error updating note"})
+        console.log(note.title);
+        const result = await note.save();
+        return res.status(200).json(result);
+      });
     }
   }catch{
     return res.status(400).json({status: "error", message: "error updating note"});

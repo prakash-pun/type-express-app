@@ -1,10 +1,11 @@
 import express, { Application, Request, Response, NextFunction } from "express";
 import cors from 'cors';
 import bodyParser from "body-parser";
-import routes from 'routes/index';
 import mongoose from 'mongoose';
+import { graphqlHTTP } from 'express-graphql';
+import routes from 'routes/index';
 import config from 'config/dbConfig';
-
+import {schema} from "data/schema";
 
 export default function createServer() {
   const app: Application = express();
@@ -30,10 +31,17 @@ export default function createServer() {
   });
 
   app.get("/", (req: Request, res: Response, next: NextFunction) => {
-    res.send("Hello World");
+    res.send("Hello World 😁");
   });
+
+  app.use('/graphql', graphqlHTTP({
+    schema: schema,
+    graphiql: true
+  }))
 
   app.use(routes);
 
   return app;
 }
+
+// 60f8f6d1dc38e804306a343d

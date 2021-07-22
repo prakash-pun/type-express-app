@@ -35,6 +35,7 @@ const notesSchema = new Schema<INotes>(
     noteShare: {
       type: Boolean,
       default: false,
+      required: false,
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
