@@ -1,12 +1,12 @@
 import jwt from 'jsonwebtoken';
 import { NextFunction, Response, Request } from 'express';
-import { User } from 'entity/User';
-import { getMongoRepository } from 'typeorm';
+import User, {IUser}  from 'models/User';
 
 export const authFunction = {
   generateJwt: (payload) => {
     let refreshTokens = []
     const jwtToken = jwt.sign(payload, process.env.JWT_SECRET_KEY, { expiresIn: Math.floor(Date.now() / 1000) + (60 * 60), });
+    console.log(jwtToken)
     // const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET)
     // refreshTokens.push(refreshToken)
     return jwtToken;
@@ -21,12 +21,10 @@ export const authFunction = {
       if (!token) {
         return res.status(401).json({ detail: "token not provided" });
       }
-      const userToken = jwt.verify(token, process.env.JWT_SECRET_KEY, async (err, userData) => {
+      // const userRepositorys = getRepository(User);
+      const userToken = jwt.verify(token, process.env.JWT_SECRET_KEY, async (err, decode) => {
         if (err) return res.status(403).json({ "detail": "invalid token" })
-        const userRepository = getMongoRepository(User);
-        console.log(userData.userId);
-        const user = await userRepository.findOne({email: userData.userEmail});
-        console.log(user)
+        const user = await User.findById(decode.userId);
         if (user){
           req.user = user;
           next();

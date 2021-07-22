@@ -3,8 +3,11 @@
 - create `.env` file in root folder
    ```
    PORT=300
+   DB_PORT=5432
    DB_HOST=localhost
    DB_DATABASE=<database_name>
+   DB_USERNAME=<db_username>
+   DB_PASSWORD=<password>
    JWT_SECRET_KEY=<secret_key>
    CLOUDAMQP_URL=<rabbitmq_url>
    ORIGIN=<origin>
@@ -28,7 +31,6 @@
 > npm install pg --save
 > npm install body-parser
 > npm install --save multer
-> npm install --save-dev @types/mongoose
 ```
 
 ```

@@ -2,7 +2,9 @@ import express, { Application, Request, Response, NextFunction } from "express";
 import cors from 'cors';
 import bodyParser from "body-parser";
 import routes from 'routes/index';
-import { TryDBConnect } from "config";
+import mongoose from 'mongoose';
+import config from 'config/dbConfig';
+
 
 export default function createServer() {
   const app: Application = express();
@@ -18,12 +20,13 @@ export default function createServer() {
 
   // app.use(express.json())
   
-  app.use(async (req: Request, res: Response, next: NextFunction) => {
-    await TryDBConnect(() => {
-      res.json({
-        error: "Database connection error"
-      });
-    }, next);
+  mongoose
+  .connect(config.mongo.url, config.mongo.options)
+  .then((result) => {
+    console.log("database connected");
+  })
+  .catch((error) => {
+    console.log(error)
   });
 
   app.get("/", (req: Request, res: Response, next: NextFunction) => {

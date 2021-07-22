@@ -1,5 +1,5 @@
 // import { UserModel } from "../../src/user/user.model";
-import {User} from "../../src/entity/User";
+import {User} from "../../src/model/User";
 
 declare global{
     namespace Express {

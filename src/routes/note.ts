@@ -2,12 +2,12 @@ import { Router, Request, Response } from "express";
 import { validationResult, Result, ValidationError } from "express-validator";
 import multer from "multer";
 import jwtAuth from 'middleware/jwtAuth';
-import { Notes } from "entity/Notes";
+import Notes, { INotes } from "models/Notes";
 import validateNote from "util/validation/validateNote";
-import { getMongoRepository, getRepository } from "typeorm";
 import { amqpConnect, amqpSend } from "config";
-import  { v4 as uuidv4 } from 'uuid';
-import mongoose, { mongo, ObjectId } from "mongoose";
+import { v4 as uuidv4 } from 'uuid';
+import mongoose from 'mongoose';
+
 
 const storage = multer.diskStorage({
   destination: function (req: Request, file: Express.Multer.File,
@@ -56,59 +56,66 @@ amqpConnect({ url: process.env.CLOUDAMQP_URL })
 
 
 router.get("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  const noteRepository = getMongoRepository(Notes);
-  const user = req.user.id;
+  const user = req.user;
+  console.log(user.id)
+  console.log(user._id)
   const page: number = parseInt(req.query.page as any) || 1;
   const limit: number = parseInt(req.query.limit as any) || 5;
-  const total = await noteRepository.count({ where: { owner: user } });
+  const total = await Notes.count(user.id);
+  console.log(total)
+  console.log(mongoose.Types.ObjectId.isValid(user.id));
+  // true
+  console.log(mongoose.Types.ObjectId.isValid('whatever'));
+  // false
+
   let options = {}
 
-  const note = await noteRepository.find({
-    ...options,
-    take:limit,
-    skip: (page - 1) * limit,
-    where: { owner: user }
+  const note = await Notes.find(
+    {
+    // ...options,
+    // take:limit,
+    // skip: (page - 1) * limit,
+    owner: user.id
   });
+  
+  console.log(note);
+  if (!note) return res.status(400).json({status: "error", message: "not found"})
 
-  res.status(200).json({total, page, last_page: Math.ceil(total/limit), note});
+  return res.status(200).json({total, page, last_page: Math.ceil(total/limit), note});
 })
 
 
 router.post("/", jwtAuth.verifyLogin, upload.single('noteImage'), async (req: Request, res: Response) => {
-
+  const noteData:{
+    title: string,
+    subTitle: string,
+    noteImage: string,
+    tags: string,
+    content: string,
+    noteShare: boolean;
+  } = {
+    title: req.body.title,
+    subTitle: req.body.subTitle,
+    noteImage: req.file.path,
+    tags: req.body.tags,
+    content: req.body.content,
+    noteShare: req.body.noteShare,
+  }
   const errors: Result<ValidationError> = validationResult( req );
   
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
   }else{
-    try {
-      const noteData:{
-        title: string,
-        subTitle: string,
-        noteImage: string,
-        tags: string,
-        content: string,
-        noteShare: boolean;
-      } = {
-        title: req.body.title,
-        subTitle: req.body.subTitle,
-        noteImage: req.file.path,
-        tags: req.body.tags,
-        content: req.body.content,
-        noteShare: req.body.noteShare,
-      }
-
-      const noteRepository = getMongoRepository(Notes);
-      let notes: Notes;
-      notes = await noteRepository.create(noteData);
+    try{    
+      let notes: INotes;
+      notes = await Notes.create(noteData);
       notes.owner = req.user;
-      const result = await noteRepository.save(notes);
+      const result = await notes.save();
       const filePath = req.file;
       const postData = {result, filePath};
       if (result.noteShare == true) amqpSend(channel, JSON.stringify(postData), 'note_created');
       return res.status(201).json(result);
-    } catch (err) {
-      console.log(err);
+    }catch(err){
       return res.status(201).json({status: errors, message: "error creating note"});
     }
   }
@@ -116,12 +123,14 @@ router.post("/", jwtAuth.verifyLogin, upload.single('noteImage'), async (req: Re
 
 
 router.get('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  const noteRepository = getMongoRepository(Notes);
-  const user = req.user.id;
-  let note: Notes;
-  const id: mongoose.Types._ObjectId = new mongoose.Types.ObjectId(req.params.id);
-  note = await noteRepository.findOne(id: id, owner: req.user});
+  const user = req.user;
+  let note: INotes;
+  note = await Notes.findOne({
+      owner: user.id,
+      _id: req.params.id
+    });
   console.log(note);
+  console.log(mongoose.Types.ObjectId.isValid(req.params.id));
   if(!note){
     res.status(404).json({
       status: "error",
@@ -152,15 +161,14 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
   }
-  const noteRepository = getMongoRepository(Notes);
-  let note: Notes;
+
+  let note: INotes;
   try{
-    note = await noteRepository.findOne({
-      where:{
+    note = await Notes.findOne(
+      {
         owner: req.user.id,
-        id: req.params.id,
-      }
-    });
+        _id: req.params.id,
+      });
     console.log(note);
     if(!note){
       res.status(404).json({
@@ -168,8 +176,8 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
         message: "Note not found",
       });
     }else{
-      noteRepository.merge(note, noteData);
-      const result = await noteRepository.save(note);
+      note.updateOne(note);
+      const result = await note.save();
       return res.status(200).json(result);
     }
   }catch{
@@ -179,14 +187,12 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
 
 
 router.delete("/:id", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  const noteRepository = getMongoRepository(Notes);
-  const user = req.user.id;
-  let note: Notes;
-  note = await noteRepository.findOne({
-    where: {
-      owner: user,
-      id: req.params.id,
-    }});
+  const user = req.user;
+  let note: INotes;
+  note = await Notes.findOne({
+      owner: user.id,
+      _id: req.params.id,
+    });
   console.log(note);
   if(!note){
     res.status(404).json({
@@ -194,7 +200,7 @@ router.delete("/:id", jwtAuth.verifyLogin, async (req: Request, res: Response) =
       message: "Note not found",
     });
   }else{
-    noteRepository.delete(req.params.id);
+    note.delete();
     res.status(200).json({status: "success", message: "note deleted"});
   }
 });
