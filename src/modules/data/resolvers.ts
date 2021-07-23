@@ -2,7 +2,7 @@ import User from '../../models/User';
 
 const resolvers = {
   Query: {
-    getUser: (root, { id }) => {
+    getUser: ({ id }) => {
       return new Promise((resolve, object) => {
         User.findById(id, (err, user) => {
           if (err) console.log(err)

@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 import { graphqlHTTP } from 'express-graphql';
 import routes from 'routes/index';
 import config from 'config/dbConfig';
-import { schema } from "modules/data/schema";
+import { schema, userSchema } from "modules/data/schema";
 import { schemaNote } from "modules/notes/schema";
 
 export default function createServer() {
@@ -35,6 +35,14 @@ export default function createServer() {
     res.send("Hello World 😁");
   });
 
+  const loggingMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    console.log('ip:', req.ip);
+    console.log('ip:', req.url);
+    console.log('ip:', req.ips);
+    next();
+  }
+
+  app.use(loggingMiddleware);
   app.use('/graphqlUser', graphqlHTTP({
     schema: schema,
     graphiql: true

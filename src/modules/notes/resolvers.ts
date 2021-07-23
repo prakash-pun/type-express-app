@@ -23,3 +23,28 @@ const resolvers = {
 }
 
 export { resolvers };
+
+
+// mutation {
+//   createContext(input: {
+//     title: "dfdf"
+//     subtitle: "dfsdf"
+//     ram: [
+//       {
+//         name: "dfdf"
+//       }
+//     ]
+//   }){
+//     title,
+//     subtitle,
+//   }
+// }
+
+// query{
+//   getNote (id: "60f90495e99b312c680991d0"){
+//    title
+//    owner{
+//      email
+//    }
+//  }
+//  }
