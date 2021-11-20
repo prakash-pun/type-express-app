@@ -1,8 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
 
-export default function authFunction (req: Request, res: Response, next: NextFunction) {
-  const result = {}
+export default function authFunction(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const result: any = {};
   const errors = validationResult(req);
   if (errors.isEmpty()) {
     next();
@@ -10,6 +14,6 @@ export default function authFunction (req: Request, res: Response, next: NextFun
     errors.array().forEach((error) => {
       result[error.param] = error.msg;
     });
-    return res.json({ "error": result });
+    return res.json({ error: result });
   }
 }

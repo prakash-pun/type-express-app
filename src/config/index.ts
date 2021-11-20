@@ -1,1 +1,2 @@
-export * from './ampqConnect';
+export * from "./ampqConnect";
+export * from "./dbConfig";

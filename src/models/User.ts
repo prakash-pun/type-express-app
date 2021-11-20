@@ -1,5 +1,5 @@
-import { Schema, model, Document } from 'mongoose'
-import bcrypt from 'bcryptjs';
+import { Schema, model, Document } from "mongoose";
+import bcrypt from "bcryptjs";
 
 export interface IUser extends Document {
   firstName: string;
@@ -9,7 +9,7 @@ export interface IUser extends Document {
   password: string;
   encryptPassword(password: string): Promise<string>;
   checkPasswordEncrypt(password: string): Promise<boolean>;
-};
+}
 
 const userSchema = new Schema<IUser>(
   {
@@ -28,26 +28,29 @@ const userSchema = new Schema<IUser>(
       type: String,
       unique: true,
       required: true,
-      lowercase: true
+      lowercase: true,
     },
     password: {
       type: String,
-      required: true
-    }
-  }
-  , {
-    timestamps: true
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
   }
 );
 
-userSchema.methods.encryptPassword = async (password: string): Promise<string> => {
-    const salt = await bcrypt.genSalt(10);
-    return bcrypt.hash(password, salt);
+userSchema.methods.encryptPassword = async (
+  password: string
+): Promise<string> => {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
 };
 
-userSchema.methods.checkPasswordEncrypt = async function (password: string): Promise<boolean> {
-    return await bcrypt.compare(password, this.password);
+userSchema.methods.checkPasswordEncrypt = async function (
+  password: string
+): Promise<boolean> {
+  return await bcrypt.compare(password, this.password);
 };
 
-
-export default model<IUser>('User', userSchema);
+export default model<IUser>("User", userSchema);

@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 
 export default (password: string): Promise<string> => {
   return new Promise((resolve, reject) => {

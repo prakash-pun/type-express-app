@@ -1,7 +1,12 @@
 import { makeExecutableSchema } from "@graphql-tools/schema";
-import { buildSchema, GraphQLObjectType, GraphQLString, GraphQLSchema } from "graphql";
-import { resolvers } from './resolvers';
-import User from '../../models/User';
+import {
+  buildSchema,
+  GraphQLObjectType,
+  GraphQLString,
+  GraphQLSchema,
+} from "graphql";
+import { resolvers } from "./resolvers";
+import User from "../../models/User";
 
 const typeDefs = `
   type User {
@@ -31,13 +36,13 @@ const typeDefs = `
     updateUser(input: UserInput): User
     deleteUser(id: ID!): String
   }
-`
+`;
 
 // implement same API using GraphQL schema Language
 
 // Define the User Type
 const usertype = new GraphQLObjectType({
-  name: 'User',
+  name: "User",
   fields: {
     id: { type: GraphQLString },
     firstName: { type: GraphQLString },
@@ -45,24 +50,24 @@ const usertype = new GraphQLObjectType({
     userName: { type: GraphQLString },
     email: { type: GraphQLString },
     password: { type: GraphQLString },
-  }
+  },
 });
 
 var queryType = new GraphQLObjectType({
-  name: 'Query',
+  name: "Query",
   fields: {
     user: {
       type: usertype,
       // `args` describes the arguments that the `user` query accepts
       args: {
-        id: { type: GraphQLString }
+        id: { type: GraphQLString },
       },
       resolve: (_, { id }) => {
         return User.findById(id);
       },
     },
-  }
-})
+  },
+});
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 

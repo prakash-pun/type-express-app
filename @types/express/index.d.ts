@@ -1,10 +1,10 @@
 // import { UserModel } from "../../src/user/user.model";
-import {User} from "../../src/model/User";
+import { IUser } from "../../src/models/User";
 
-declare global{
-    namespace Express {
-        interface Request {
-          user: User
-        }
+declare global {
+  namespace Express {
+    interface Request {
+      user: IUser;
     }
+  }
 }
