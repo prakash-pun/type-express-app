@@ -2,9 +2,8 @@ import { Router, Request, Response } from "express";
 import { validationResult, Result, ValidationError } from "express-validator";
 import multer from "multer";
 import jwtAuth from 'middleware/jwtAuth';
-import { Notes } from "entity/Notes";
+import Notes, { INotes } from "models/Notes";
 import validateNote from "util/validation/validateNote";
-import { getRepository } from "typeorm";
 import { amqpConnect, amqpSend } from "config";
 import  { v4 as uuidv4 } from 'uuid';
 
@@ -56,14 +55,13 @@ amqpConnect({ url: process.env.CLOUDAMQP_URL })
 
 
 router.get("/", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  const noteRepository = getRepository(Notes);
   const user = req.user.id;
   const page: number = parseInt(req.query.page as any) || 1;
   const limit: number = parseInt(req.query.limit as any) || 5;
-  const total = await noteRepository.count({ where: { owner: user } });
+  const total = await Notes.count({ where: { owner: user } });
   let options = {}
 
-  const note = await noteRepository.find({
+  const note = await Notes.find({
     ...options,
     take:limit,
     skip: (page - 1) * limit,
@@ -96,11 +94,10 @@ router.post("/", jwtAuth.verifyLogin, upload.single('noteImage'), async (req: Re
     return res.status(422).json({ errors: errors.array() });
   }else{
     try{    
-      const noteRepository = getRepository(Notes);
-      let notes: Notes;
-      notes = await noteRepository.create(noteData);
+      let notes: INotes;
+      notes = await Notes.create(noteData);
       notes.owner = req.user;
-      const result = await noteRepository.save(notes);
+      const result = await notes.save();
       const filePath = req.file;
       const postData = {result, filePath};
       if (result.noteShare == true) amqpSend(channel, JSON.stringify(postData), 'note_created');
@@ -113,14 +110,12 @@ router.post("/", jwtAuth.verifyLogin, upload.single('noteImage'), async (req: Re
 
 
 router.get('/:id', jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  const noteRepository = getRepository(Notes);
   const user = req.user.id;
-  let note: Notes;
-  note = await noteRepository.findOne({
-    where: {
+  let note: INotes;
+  note = await Notes.findOne({
       owner: user,
       id: req.params.id,
-    }});
+    });
   console.log(note);
   if(!note){
     res.status(404).json({
@@ -152,10 +147,10 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
   }
-  const noteRepository = getRepository(Notes);
-  let note: Notes;
+
+  let note: INotes;
   try{
-    note = await noteRepository.findOne({
+    note = await Notes.findOne({
       where:{
         owner: req.user.id,
         id: req.params.id,
@@ -168,8 +163,8 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
         message: "Note not found",
       });
     }else{
-      noteRepository.merge(note, noteData);
-      const result = await noteRepository.save(note);
+      note.updateOne(note);
+      const result = await note.save();
       return res.status(200).json(result);
     }
   }catch{
@@ -179,10 +174,9 @@ router.put("/:id", validateNote, jwtAuth.verifyLogin, async (req: Request, res: 
 
 
 router.delete("/:id", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  const noteRepository = getRepository(Notes);
   const user = req.user.id;
-  let note: Notes;
-  note = await noteRepository.findOne({
+  let note: INotes;
+  note = await Notes.findOne({
     where: {
       owner: user,
       id: req.params.id,
@@ -194,7 +188,7 @@ router.delete("/:id", jwtAuth.verifyLogin, async (req: Request, res: Response) =
       message: "Note not found",
     });
   }else{
-    noteRepository.delete(req.params.id);
+    note.delete();
     res.status(200).json({status: "success", message: "note deleted"});
   }
 });

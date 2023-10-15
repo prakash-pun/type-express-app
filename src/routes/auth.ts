@@ -1,12 +1,10 @@
 import { Router, Request, Response } from "express";
 const { body, validationResult } = require('express-validator');
-import { User } from "entity/User";
 import jwtAuth from 'middleware/jwtAuth';
-import { getRepository } from "typeorm";
 import { validate, ValidationError } from "class-validator";
 import loginValidation from "util/validation/loginValidation";
 import { Result } from "express-validator";
-
+import User, {IUser} from 'models/User';
 
 const router = Router();
 
@@ -16,10 +14,8 @@ const router = Router();
  * @access Public
  */
 router.get("/profile", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  const userRepository = getRepository(User);
   const userId = req.user.id;
-  const user = await userRepository.findOne({where: {id: userId}});
-  console.log(user);
+  const user = await User.findById(userId);
   res.status(200).json(user);
 })
 
@@ -52,17 +48,15 @@ router.post("/register",
       }
       const duplicateUser = await User.findOne({ email: req.body.email });
       const duplicateUserName = await User.findOne({ userName: req.body.userName });
-      if (duplicateUserName) {
-        return res.status(400).json({ message: "username already exists" });
-      }
-      if (duplicateUser) {
-        return res.status(400).json({ message: "email already exists" });
-      }
+      if (duplicateUserName) return res.status(400).json({ message: "username already exists" });
+      if (duplicateUser) return res.status(400).json({ message: "email already exists" });
 
-      const user = await User.create(userData);
-      const result = await User.save(user);
+      const newUser: IUser = new User(userData);
+      newUser.password = await newUser.encryptPassword(newUser.password);
+
+      // const user = await User.create(userData);
+      const result = await newUser.save();
       console.log(result);
-      console.log(userData);
 
       return res.status(201).json(result);
     } catch (e) {
@@ -87,14 +81,8 @@ router.post("/login", loginValidation, async (req: Request, res: Response) => {
     if (!errors.isEmpty()) {
       return res.status(422).json({ errors: errors.array() });
     }
-    const userRepository = getRepository(User);
-    let user: User;
-
-    user = await userRepository
-      .createQueryBuilder( "user" )
-      .addSelect( 'user.password' )
-      .where( "user.email = :email", { email: data.email } )
-      .getOne();
+    let user: IUser;
+    user = await User.findOne({ email: data.email });
 
     if (user){
       const jwtUser = {
@@ -137,19 +125,14 @@ router.post("/change", jwtAuth.verifyLogin, async (req: Request, res: Response) 
   }
 
   // user from the database
-  const userRepository = getRepository(User);
-  let user: User;
+  let user: IUser;
 
   const errors: Result<ValidationError> = validationResult( req );
   
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
   }else{
-    user = await userRepository
-    .createQueryBuilder( "user" )
-    .addSelect( 'user.password' )
-    .where( "user.id = :id", { id: id } )
-    .getOne();
+    user = await User.findById(id);
     console.log(user);
     if(!user){
       res.status(404).json({
@@ -169,8 +152,8 @@ router.post("/change", jwtAuth.verifyLogin, async (req: Request, res: Response) 
     }
 
     user.password = data.new_password;
-    user.hashPassword();
-    userRepository.save(user);
+    user.encryptPassword(data.new_password);
+    user.save();
     return res.status( 204 ).json( {
         status: "Success",
         message: user,
@@ -180,9 +163,9 @@ router.post("/change", jwtAuth.verifyLogin, async (req: Request, res: Response) 
 
 
 router.patch("/profile/change", jwtAuth.verifyLogin, async (req: Request, res: Response) => {
-  let user: User;
+  let user: IUser;
   const userId = req.user.id;
-  const userRepository = await getRepository(User);
+  
   const userData: {
     firstName: string;
     lastName: string;
@@ -197,12 +180,12 @@ router.patch("/profile/change", jwtAuth.verifyLogin, async (req: Request, res: R
   if (!errors.isEmpty()) {
     return res.status(401).json({ errors: errors.array() });
   }else{
-    user = await userRepository.findOneOrFail(userId);
-    if(!user){
-      return res.status(401).json({status: "error", message: "user not found"});
-    }
-    userRepository.merge(user, userData);
-    const result = await userRepository.save(user);
+    user = await User.findById(userId);
+    if (!user) return res.status(401).json({ status: "error", message: "user not found" });
+    const data: IUser = req.body;
+    const patchUser = User.findByIdAndUpdate(userId, data, {new: true});
+    const result = await user.save();
+    console.log(patchUser);
     return res.status(200).json(result);
   }
 })

@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { NextFunction, Response, Request } from 'express';
-import { User } from 'entity/User';
+import User, {IUser}  from 'models/User';
 
 export const authFunction = {
   generateJwt: (payload) => {
@@ -21,9 +21,10 @@ export const authFunction = {
       if (!token) {
         return res.status(401).json({ detail: "token not provided" });
       }
+      // const userRepositorys = getRepository(User);
       const userToken = jwt.verify(token, process.env.JWT_SECRET_KEY, async (err, decode) => {
-        if (err) return res.status(403).json({"detail": "invalid token"})
-        const user = await User.findOne({id: decode.userId});
+        if (err) return res.status(403).json({ "detail": "invalid token" })
+        const user = await User.findById(decode.userId);
         if (user){
           req.user = user;
           next();
