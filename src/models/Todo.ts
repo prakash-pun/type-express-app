@@ -1,9 +1,9 @@
-import { Schema, model, Document } from 'mongoose'
+import { Schema, model, Document } from "mongoose";
 
 export interface ITodo extends Document {
   text: string;
   isCompleted: boolean;
-};
+}
 
 const todoSchema = new Schema<ITodo>(
   {
@@ -15,12 +15,11 @@ const todoSchema = new Schema<ITodo>(
     isCompleted: {
       type: Boolean,
       default: false,
-    }
-  }
-  , {
-    timestamps: true
+    },
+  },
+  {
+    timestamps: true,
   }
 );
 
-
-export default model<ITodo>('Todo', todoSchema);
+export default model<ITodo>("Todo", todoSchema);

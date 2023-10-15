@@ -1,11 +1,11 @@
-import request from 'supertest';
-import { expect } from 'chai';
-import createServer from 'server';
+import request from "supertest";
+// import { expect } from 'chai';
+import createServer from "../../src/server";
 
 const app = createServer();
 
-describe('server check', () => {
-  it('should create server without an error', (done) => {
-    request(app).get("/").expect(200, done)
+describe("server check", () => {
+  it("should create server without an error", (done) => {
+    request(app).get("/").expect(200, done);
   });
 });

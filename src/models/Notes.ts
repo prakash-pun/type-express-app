@@ -1,5 +1,4 @@
-import mongoose, { Schema, model, Document } from 'mongoose'
-
+import mongoose, { Schema, model, Document } from "mongoose";
 
 export interface INotes extends Document {
   title: string;
@@ -9,7 +8,7 @@ export interface INotes extends Document {
   content: string;
   noteShare: boolean;
   owner: mongoose.Schema.Types.ObjectId;
-};
+}
 
 const notesSchema = new Schema<INotes>(
   {
@@ -23,13 +22,14 @@ const notesSchema = new Schema<INotes>(
     },
     noteImage: {
       type: String,
+      default: "notes/default.png",
     },
     tags: {
       type: String,
     },
     content: {
       type: String,
-      required: true
+      required: true,
     },
     noteShare: {
       type: Boolean,
@@ -38,11 +38,11 @@ const notesSchema = new Schema<INotes>(
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-    }
-  }
-  , {
-    timestamps: true
+    },
+  },
+  {
+    timestamps: true,
   }
 );
 
-export default model<INotes>('Notes', notesSchema);
+export default model<INotes>("Notes", notesSchema);

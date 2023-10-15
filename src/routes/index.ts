@@ -1,7 +1,7 @@
 import { Router } from "express";
-import auth from './auth';
-import todo from './todo';
-import note from './note';
+import auth from "./auth";
+import todo from "./todo";
+import note from "./note";
 
 const router = Router();
 
